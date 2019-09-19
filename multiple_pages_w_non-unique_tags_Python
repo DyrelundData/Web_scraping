@@ -1,0 +1,57 @@
+#Python
+
+#importing packages
+from bs4 import BeautifulSoup
+import requests
+import csv
+
+#url
+url = "https://example.dk/tilbud/index?sortering=RELEVANS&offset="
+
+#variables
+
+#a variable that can store the offset (found to be 20 on each page)
+count=-20
+
+#a variable that can store each page
+side=[]
+
+#a variable that can store the names of the suppliers (identified as h3 class ingenTopmargin)
+Names=[]
+
+#a variable that can store the prices (and other attributes) (identified as div class panelTekst)
+panelTekst=[]
+
+#looping through css across 38 pages with 20 results on each
+for i in range(0,37):
+
+#the count will return 0 the first time, 20 the next time and so on
+    count+=20
+    
+#each iteration (0, 20, and so on) will be appended to this list
+    side.append(url+str(count))
+
+#now that the urls are stored, each of them gets turned into a source
+    for i in side:
+        r = requests.get(i).text
+        soup = BeautifulSoup(r, features="lxml")
+        
+#on each page the names and prices (and other attributes) get appended to lists
+        for i in soup.find_all('h3', {'class': 'ingenTopMargin'}):
+            Names.append(str(i))
+        for i in soup.find_all('div', {'class': 'panelTekst'}):
+            panelTekst.append(str(i))
+
+#among the attributes the prices are selected (found to be located at index 3 and on every 6)
+Prices=panelTekst[3::6]
+
+#among the attributes the types of offers are selected (found to be located at index 4 on every 6)
+Types=panelTekst[4::6]
+
+#lav dictionary med navne og priser
+dictA=dict(zip(Names, zip(Types, Prices)))
+
+#print dictionary in csv
+with open('name_of_csv_file.csv', 'wb') as f:
+        w=csv.writer(f)
+        w.writerows(dictA.items())
